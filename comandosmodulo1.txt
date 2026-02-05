@@ -1,0 +1,52 @@
+practica 2
+
+ip a
+
+sudo nano /etc/network/interface
+	auto eth0
+	iface eth0 inet dhcp
+
+	auto eth0
+	iface eth0 inet static
+    	address 192.168.1.50
+    	netmask 255.255.255.0
+    	gateway 192.168.1.1
+    	dns-nameservers 8.8.8.8 8.8.4.4
+
+sudo systemctl restart networking
+
+sudo ip addr flush dev eth0
+sudo ip addr add 192.168.1.210/24 dev eth0
+sudo ip link set eth0 up
+
+sudo route add default via 192.168.1.1
+
+sudo nano /etc/resolv.conf
+	nameserver 8.8.8.8
+	nameserver 8.8.4.4
+
+practica 3
+
+sudo adduser nombre_del_usuario
+sudo usermod -aG sudo nombre_de_usuario
+sudo groupadd nombre_del_grupo
+tail/etc/group
+sudo groupdel nombre_del_grupo
+sudo userdel nombre_del_usuario
+
+practica 4
+
+
+mkdir directorio_que_quieras
+cd directorio_creado
+touch archivo.txt
+vi archivo.txt
+	i
+	lo que quieras
+	: wq
+chmod 700 archivo.txt
+chmod 070 archivo.txt
+ls -l
+cd ..
+sudo cp directorio/archivo.txt materia2/
+rm -rf directorio
