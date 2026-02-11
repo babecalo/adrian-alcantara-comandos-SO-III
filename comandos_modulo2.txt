@@ -1,0 +1,47 @@
+Practica 1
+
+sudo apt update && sudo apt upgrade -y
+grep -v '^#' /etc/apt/sources.list
+ls /etc/apt/sources.list.d/
+apt search (programa en cuestion)
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:(pprograma que quieres agregar al repositorio) 
+sudo apt install (programa en cuestion)
+sudo apt purge (programas que quieres desintalar) -y
+sudo autoremove -y
+
+practica 2
+
+sudo apt install at -y
+crontab -l
+crontab -e
+		nano
+	[* * * * *(fecha que quisieras que se ejecutes)] (tarea que quieras pragramar)
+at now + (numero que quieras) (tiempo que quieras m, h, d ...)
+	rm -rf /tmp/* 2> /dev/null
+	(control + D) 
+
+ls -la /tmp
+
+Practica 3
+
+lsblk
+sudo fdisk /dev/sdb
+	m
+	p
+	1
+	{enter}
+	{enter}
+	w
+
+sudo mkfs.ext4 /dev/sdb1
+mkdir ~/Desktop/(nombre de como le quieres llamar al disco)
+sudo mount ~/dev/sdb1 /Desktop/(como se llama)
+cd ~/Desktop/(como se llama)
+sudo touch (nombre del archivo que quieras crear).txt
+echo "..." | sudo tee (el nombre que le pusiste)
+cat (archivo)
+cd ~
+sudo umount ~/Desktop/(nombre del disco)
+sudo mount ~/dev/sdb 1/mnt
+ls /mnt
