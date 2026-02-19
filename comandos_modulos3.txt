@@ -1,0 +1,118 @@
+practica 1
+
+sudo cp /etc/default/grub /etc/default/grub.bak
+sudo nano /etc/default/grup
+	GRUB_TIMEOUT=(cambiamos este valor por el que tu quieras)
+sudo update-grup
+sudo reboot
+
+(presionamos e)
+(buscamos algo que comience con linux o linuxefi y borramos
+ "ro"y "quiet splash" y escribimos "init=/bin/bash")
+
+luego escribimos
+passwd root <----- (esto de root es opcional. si solo quieres cambiar el
+nombre de un usuario dejalo vacio)
+
+y escribimos nueva password
+
+luego reiniciamos con exec /sbin/init
+
+y bravoooo!!!!
+
+Practica 2
+
+sudo nano bachup.sh
+	echo "Creando el backup"
+
+ORIGEN="/home/kali"
+DESTINO="/home/kali/mis_backup"
+FECHA=$(date +%F_%H-%M-%S)
+NOMBRE="backup_$FECHA.tar.gz"
+
+echo "--- inicioando backup ---"
+
+mkdir -p "$DESTINO"
+
+echo "comprimiendo archivos  $ORIGEN hacia  $DESTINO"
+
+tar -czf "$ORIGEN/$NOMBRE" "$DESTINO" 2>/dev/null
+
+if [ -f $NOMBRE ];
+then 
+        echo"Moviendo a la carpeta $DESTINO"
+        mv "$NOMBRE" "$DESTINO/"
+
+
+
+        if [ $? -eq 0 ]; 
+        then
+
+                echo"EXito se ha creado"
+                echo "tus ahrchivos estan en "$DESTINO
+                ls -l $DESTINO
+        else
+                echo "mala suelte bro"
+        fi
+else 
+        echo "error"
+fi
+
+echo "--- FIN del scrip ---"
+
+(ctrl + o)
+(enter)
+(ctrl + x)
+chmod +wrx (el archivo en cuestion)
+./archivo.sh
+
+para el ifconfig
+
+nano archivo_que_tu_quieras.sh
+	echo "ejecutando ifconfig"
+
+DESTINO="/home/kali/Desktop"
+
+read -p "Ingrese el nombre que quieas: " nombre
+
+ifconfig> "$nombre.txt" 2>/dev/null
+
+mv "$nombre.txt" "$DESTINO/"
+
+echo "archivo creado"
+
+
+(ctrl + o)
+(enter)
+(ctrl + x)
+chmod +wrx (el archivo en cuestion)
+./archivo.sh
+
+practica 3
+
+	en el server
+
+ip a
+sudo systemctl enable ssh
+sudo systemctl start ssh
+sudo systemctl status ssh
+
+	en el host
+		[si es linux]
+ssh (nombre de su maquina)@(su ip)
+ssh-keygen -t rsa
+(le das enter a todo)
+ssh-copy-id (nombre de su maquina server)@(su ip)
+(escribes yes y pones la password del server)
+(y ya puedes entrar con) ssh (nombre del server)@(ip)
+
+		[si es windows
+ssh (nombre de su maquina)@(su ip)]
+ssh-keygen -t rsa
+(le das enter a todo)
+scp .ssh/id_rsa.pub kali@192.168.1.XX:~/clave_windows.pub
+(si no existe)mkdir .ssh
+cat clave_windows.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+(si lo hiciste bien)ssh (server)@(ip)
