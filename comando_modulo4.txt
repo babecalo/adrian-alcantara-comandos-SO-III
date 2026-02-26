@@ -1,0 +1,85 @@
+practica 1
+
+sudo apt update
+sudo apt install apache2
+sudo mkdir -p /var/www/(nombre de la pagina)
+echo "<h1> aqui escribes lo que quieras </h1>" | sudo tee /var/www/(nombre de la pagina)/index.html
+sudo nano /etc/apache2/ports.conf
+	add el puerto que quieras que se escuche
+(ctrl + o)
+(ctrl + x)
+sudo nano /var/site-available/(nombre de la pagina web).conf
+	<VirtualHost *:(puerto que quieres que se escuche)>
+		DocumentRoot /var/www/(nombre de la pagina)
+	</VirtualHost>
+sudo a2ensite (nombre de la pag).conf
+sudo systemctl reload apache2
+
+practica 2
+
+(para evitar que google reporte eso como spam primero crearse una password de app)
+sudo apt install postfix mailutils
+libsasl2-modules -y
+sudo nano /etc/postfix/main.cf
+	relayhost = [smtp.gmail.com]:587
+	smtp_use_tls = yes
+	smtp_sasl_auth_enable = yes
+	smtp_sasl_password_maps = hast:/etc/postfix/sasl_passwd
+	smtp_sasl_security_options = noanonymous
+(ctrl + o)
+(ctrl + x)
+
+sudo nano /etc/postfix/sasl_passwd
+	[smtp.gmail.com]:587 tucorreo@gmail.com:tu_password_de_app
+(ctrl + o)
+(ctrl + x)
+
+sudo postmap /etc/postfix/sasl_passwd
+sudo chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+sudo systemctl enable --now postfix
+sudo systemctl restart postfix
+
+y envia un correo con 
+
+echo "lo que quieras en el cuerpo" | mail -s "el asunto " elcorreo@gmail.com
+
+practica 3
+
+sudo apt install cups -y
+sudo apt install printer-driver-cups-pdf -y
+sudo systemctl enable --now cups
+sudo systemctl restart cups
+sudo mkdir -p /var/spool/cups-pdf/ANONYMOUS
+sudo chmod -R 777 /var/spool/cups-pdf/ANONYMOUS
+	
+	luego debomos de entrar en la web y buscar 
+
+http://localhost:631
+	revisamos que la impresota en el apartado de impresoras (printers en ingles)
+	este la impresora en "queue names" nota: normalmente se llaman o PDF o CUPS-PDF
+	
+	si no esta compartiendo entonces en terminal escribimos
+	
+	sudo lpadmin -p (nombre que aparece en el queue) -o printer-is-shared=true
+	sudo systemctl restart cups
+
+	y luego verificaimos
+
+si la impresora no existe pues tiene que crearla dentro de la web solo ve a administracion en la web y en printers dele a add printers
+
+
+luego en el otro equipo buscamos el nombre de la impresora que aparece en la queue o si no buscamos por la direccion ip del server
+
+	ipp://(direcion ip del server)/printers/CUPS_PDF
+
+si no aparece y comprovaste que en el server la impresora si funciona entonces escribes 
+	
+	sudo lpadmin -p Impresora_Kali_PDF -E -v ipp://192.168.1.210/printers/PDF -m everywhere (esto para los host linux que den problemas)
+
+	en windows es raro que den eso tipo de errores con los drivers 
+
+una ves ya tengas todo hay solo te queda imprimir y visualizar tanto en la pagina web de tu impresora de tu servers los trabajos
+como en la bash con el comando:
+
+ls -l /var/spool/cups-pdf/ANONYMOUS
+ 
