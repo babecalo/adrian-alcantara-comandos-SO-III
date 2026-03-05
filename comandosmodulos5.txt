@@ -1,0 +1,245 @@
+
+		Practica 1
+
+mkdir ~/sincronizacion
+
+
+touch ~/sincronizacion/archivo{1..100}.txt
+
+
+ls ~/sincronizacion | wc -l    # Debe decir 100
+
+
+sudo apt update && sudo apt install openssh-server rsync -y
+
+
+sudo systemctl enable ssh && sudo systemctl start ssh
+
+
+sudo systemctl status ssh
+
+mkdir ~/sincronizacion
+
+
+sudo apt update && sudo apt install rsync openssh-server -y
+sudo systemctl enable ssh && sudo systemctl start ssh
+
+
+ssh-keygen -t rsa -b 4096
+
+
+
+ssh-copy-id kali@192.168.1.20
+
+
+ssh kali@192.168.1.20 
+
+
+rsync -avz ~/sincronizacion/ kali@192.168.1.20:~/sincronizacion/
+
+
+
+
+nano ~/sync.sh
+
+ORIGEN="/home/TU_USUARIO/sincronizacion/"
+DESTINO="kali@192.168.1.20:/home/kali/sincronizacion/"
+LOG="/home/TU_USUARIO/sync.log"
+
+DATE=$(date '+%Y-%m-%d %H:%M:%S')
+echo "[$DATE] Iniciando sync..." >> $LOG
+rsync -avz -e "ssh -i /home/TU_USUARIO/.ssh/id_rsa -o StrictHostKeyChecking=no" $ORIGEN $DESTINO >> $LOG 2>&1
+echo "[$DATE] Sync completado." >> $LOG
+
+# Dar permisos
+chmod +x /home/TU_USUARIO/sync.sh
+
+# Probar manualmente
+bash /home/TU_USUARIO/sync.sh
+
+# Ver qué pasó
+cat /home/TU_USUARIO/sync.log
+
+crontab -e
+	* * * * * /bin/bash /home/TU_USUARIO/sync.sh
+
+# Ver logs del sistema para confirmar que crontab corre
+grep CRON /var/log/syslog | tail -20
+
+# O en tiempo real
+sudo tail -f /var/log/syslog | grep CRON
+```
+
+Debes ver algo como:
+```
+Mar 04 10:01:01 pop-os CRON[1234]: (tuusuario) CMD (/bin/bash /home/tuusuario/sync.sh)
+
+# En servidor Kali, ver si llegan archivos
+watch -n 10 "ls ~/sincronizacion/ | wc -l"
+
+
+		Practica 2
+
+sudo nano /etc/hosts
+
+# Agregar:
+192.168.1.10   node1
+192.168.1.20   node2
+
+sudo apt update
+sudo apt install pacemaker corosync pcs -y
+
+# Establecer contraseña para usuario hacluster
+sudo passwd hacluster
+# (usa la misma contraseña en ambos nodos, ej: Cluster123)
+
+# Habilitar servicios
+sudo systemctl enable pcsd && sudo systemctl start pcsd
+
+# Autenticar nodos
+sudo pcs host auth node1 node2 -u hacluster -p Cluster123
+
+# Crear el cluster
+sudo pcs cluster setup MiCluster node1 node2 --force
+
+# Iniciar cluster
+sudo pcs cluster start --all
+sudo pcs cluster enable --all
+
+# Verificar estado
+sudo pcs status
+
+# Deshabilitar STONITH (para laboratorio)
+sudo pcs property set stonith-enabled=false
+
+# Ignorar quorum (solo 2 nodos)
+sudo pcs property set no-quorum-policy=ignore
+
+# Verificar
+sudo pcs property list
+
+sudo pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \
+    ip=192.168.1.100 \
+    cidr_netmask=24 \
+    op monitor interval=30s
+
+# Ver estado
+sudo pcs status
+sudo pcs resource status
+
+# En otra PC - hacer ping continuo a la IP flotante
+ping 192.168.1.100
+
+# Mientras hace ping, apagar node1:
+sudo shutdown now
+
+# El ping debe continuar porque node2 toma la IP flotante
+# Volver a encender node1 y ver que el cluster se recupera
+sudo pcs status
+
+		Practica 3
+
+sudo apt update
+sudo apt install apache2 keepalived -y
+sudo systemctl enable apache2 && sudo systemctl start apache2
+
+sudo nano /var/www/html/index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server 1</title>
+    <style>
+        body { background: #2ecc71; display:flex; justify-content:center;
+               align-items:center; height:100vh; margin:0; }
+        h1   { color: white; font-size: 4rem; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <h1> SERVIDOR 1 - ACTIVO</h1>
+</body>
+</html>
+
+sudo nano /var/www/html/index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server 2</title>
+    <style>
+        body { background: #e74c3c; display:flex; justify-content:center;
+               align-items:center; height:100vh; margin:0; }
+        h1   { color: white; font-size: 4rem; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <h1> SERVIDOR 2 - BACKUP</h1>
+</body>
+</html>
+
+sudo nano /etc/keepalived/keepalived.conf
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0          # Cambia por tu interfaz (ip a para verla)
+    virtual_router_id 51
+    priority 100            # Master tiene prioridad más alta
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+
+    virtual_ipaddress {
+        192.168.1.100/24    # Tu IP flotante
+    }
+}
+
+sudo nano /etc/keepalived/keepalived.conf
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0          # Cambia por tu interfaz
+    virtual_router_id 51
+    priority 90             # Backup tiene prioridad más baja
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+
+    virtual_ipaddress {
+        192.168.1.100/24
+    }
+}
+
+sudo systemctl enable keepalived && sudo systemctl start keepalived
+
+# Verificar que la VIP aparece en server1
+ip a | grep 192.168.1.100
+
+# Desde tu PC - abrir navegador en:
+http://192.168.1.100
+# Debe mostrar "SERVIDOR 1 - ACTIVO" (verde)
+
+# Apagar Server 1:
+sudo shutdown now
+
+# Refrescar el navegador
+# Debe mostrar "SERVIDOR 2 - BACKUP" (rojo)
+# ¡Sin cambiar la IP!
+
+# Rsync
+crontab -l                          # Ver crontabs activos
+cat ~/sync.log                      # Ver historial de sync
+
+# Pacemaker
+sudo pcs status                     # Estado del cluster
+sudo pcs resource status            # Estado de recursos
+sudo crm_mon -1                     # Monitor del cluster
+
+# Keepalived
+sudo systemctl status keepalived    # Estado del servicio
+ip a | grep -A2 eth0                # Ver si tiene la VIP
+sudo journalctl -u keepalived -f    # Logs en tiempo real
