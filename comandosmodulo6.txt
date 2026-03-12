@@ -1,0 +1,202 @@
+			practica 1
+
+sudo apt install gpg y <-- para descargarlo
+gpg --full-generate-key <-- para general la llave publica y privada
+	configura a tu gusto
+gpg --list-keys <-- para confirmacion (no es obligatorio)
+
+(creamos una carpeta y archivo )
+mkdir tu_carpeta
+cd tu_carpeta
+echo "informacion sensible" > secreto.txt <-- esto solo es para la creacion del archivo
+
+gpg --encript --recipient tu_usuario@kali.local (aqui realmente va el correo que tiene de tu linux) secreto.txt.gpg secreto.txt <-- esto es encriptando el archivo
+
+verifica si esta cifrada la info ya 
+ls -la
+podras tu archivo y podras ver el archivo.txt.gpg
+
+incluso puedes intentar leerlo y veras que es imposible 
+
+para decifrar 
+
+gpg --decript --output  secreto_desifrado.txt secreto.txt.gpg
+
+luego puedes verificar y veras que se creo el secreto_desifrado.txt
+
+(bonus sifrado simetrico)
+
+gpg --symetric --cipher-algo (formaato de sifrado que quieres usar en mi casos fue AES256) --output secreto_sym.gpg secreto.txt
+
+para desifrar 
+
+gpg --decript --output desifrado_sym.txt secreto_sym.gpg
+		Practica 2
+
+descargar todos los servicios que vas a utilizar y activarlos
+sudo apt install svftpd -y <-- puerto 21
+sudo apt install ssh <-- puerto 22
+sudo apt install apache2 <-- puerto 80
+
+sudo systemctl start svftpd
+sudo systemctl enable svftpd
+sudo systemctl start ssh
+sudo systemctl enable ssh
+sudo systemctl start apache
+sudo systemctl enable apache
+
+verifica tablas de iptables para ver las reglas actuales
+
+sudo iptables -L -n -v
+
+los bloqueos
+
+sudo iptables -A INPUT -p tcp --dport 21 -j DROP
+sudo iptables -A INPUT -p tcp --dport 22 -j DROP <-- precaucion con esta porque si estas conectado por ssh y bloquea esto y sales no podras entrar nuevamente por ssh
+sudo iptables -A INPUT -p tcp --dport 80 -j DROP 
+
+ya con esto todos los puertos mencionados estan bloqueados 
+
+para borrar el bloqueo escribir
+
+sudo iptables -D INPUT -p tcp --dport 21 -j DROP
+sudo iptables -D INPUT -p tcp --dport 22 -j DROP
+sudo iptables -D INPUT -p tcp --dport 80 -j DROP
+
+ahora con ufw 
+
+sudo apt install ufw -y
+
+sudo ufw status <-- te debe de aparecer inactive
+
+los bloqueos de los puertos 
+
+sudo ufw deny 21
+sudo ufw deny 22
+sudo ufw deny 80
+
+sudo ufw enable
+
+puedes hacer las pruebas de manera externa y veras que funciona
+
+para verificar las tablas 
+
+sudo ufw status numbered
+
+para desbloquear todo 
+
+sudo ufw reset
+
+para solo desbloquear una
+
+sudo ufw allow 21
+
+			practica 3
+
+sudo apt install snort -y
+te preguntaran por tu rango de ip lo pones
+
+y si no te aparece entra a 
+
+sudo nano /etc/snort/snort.lua
+	$HOME_NET = poner tu rango
+	ctrl + o
+	ctrl + x
+entonces ahora creamos a una reglas 
+sudo nano /etc/snort/rules/mis_reglas.rules
+```
+
+Escribe exactamente esto dentro del archivo:
+
+
+
+alert icmp any any -> $HOME_NET any (msg:"ALERTA - Ping detectado hacia el host"; sid:1000001; rev:1;)
+
+alert tcp any any -> $HOME_NET 21 (msg:"ALERTA - Trafico FTP detectado en puerto 21"; sid:1000002; rev:1;)
+
+alert tcp any any -> $HOME_NET 22 (msg:"ALERTA - Trafico SSH detectado en puerto 22"; sid:1000003; rev:1;)
+
+alert tcp any any -> $HOME_NET 80 (msg:"ALERTA - Trafico HTTP detectado en puerto 80"; sid:1000004; rev:1;)
+
+ahora toca configurar lo que es la configuracion de snort
+
+sudo nano /etc/snort/snort.lua
+	(procura encontrar variables = default_variables yy colocar)
+
+	include = '/etc/snort/rules/beta.rules',
+	
+	variables = default_variables
+}
+
+verificamos si las reglas estan correctas
+
+sudo snort -T -c /etc/snort/snort.lua -i eth0
+
+esto es para activar la consola por donde se nos notificara todo
+sudo snort -c /etc/snort/snort.lua -R /etc/snort/rules/bt.rules -i eth0 -A alert_fast -q
+
+			practica 4
+
+instalamos el authenticador de google
+
+sudo apt update
+sudo apt install libpam-google-authenticator -y
+
+ Ejecutar como el usuario que usará SSH (no como root)
+google-authenticator
+
+
+Responde las preguntas así:
+
+Do you want authentication tokens to be time-based? → y
+
+ Te mostrará un QR CODE en la terminal y una clave secreta
+ ESCANEA el QR con tu celular usando la app "Google Authenticator"
+ o "Authy" ANTES de continuar
+
+Do you want me to update your "/home/tuusuario/.google_authenticator" file? → y
+
+Do you want to disallow multiple uses of the same authentication token? → y
+
+By default, a new token is generated every 30 seconds...Do you want to do so? → y
+
+If the computer's clock is not synchronized...Do you want to enable rate-limiting? → y
+
+cat ~/.google_authenticator <-- Verificar que el archivo fue creado
+
+ahora solo tenemos que configurar lo que es el pam y ssh para la conexion remota segura
+
+sudo nano /etc/pam.d/sshd <-- esto es para editar el archivo del pam de ssh
+
+Agrega esta línea al INICIO del archivo (primera línea):
+auth required pam_google_authenticator.so
+
+ ahora toca configurar el ssh para que solicite lo que es el 2FA
+
+sudo nano /etc/ssh/sshd_config
+
+	UsePAM yes <-- ponlo en yes o agregalo
+	
+	AuthenticationMethods keyboard-interactive <-- agregalo
+
+	kbdResponseAuthentication yes <-- esto o algo parecido ponlo en yes
+
+ahora toca guardar todo resetear todo y poner a prueba
+
+sudo systemctl restart ssh
+sudo systemctl status ssh | grep "Active"
+
+desde el otro dispositivo
+
+ssh tuusuario@192.168.1.100
+
+
+El proceso de login será así:
+
+$ ssh tu_server@tu_ip
+
+Password:                          <-- Ingresa tu contraseña normal de Linux
+Verification code:                 <-- Ingresa el código de 6 dígitos de Google Authenticator
+
+Welcome to Kali GNU/Linux Rolling
+kali@kali:~$                    <-- acceso exitoso con 2FA
