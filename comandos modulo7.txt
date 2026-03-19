@@ -1,0 +1,94 @@
+		practica 1
+
+	en tu server
+
+sudo apt update && sudo apt install nfs-kernel-server -y
+sudo systemctl enable --now nfs-kernel-server
+sudo systemctl status nfs-kernel-server
+
+sudo mkdir -p /srv/OS3
+for i in $(seq 1 100); do
+  sudo touch "/srv/OS3/Adrian${i}.txt"
+done
+ls /srv/OS3 | wc -l
+
+sudo chown -R nobody:nogroup /srv/OS3
+sudo chmod 755 /srv/OS3
+ls -la /srv/OS3
+
+echo '/srv/OS3 192.168.1.0/24(rw,sync,no_subtree_check,no_root_squash)' \
+  | sudo tee -a /etc/exports
+sudo exportfs -arv
+sudo exportfs -v
+
+en caso de que tenga ufw activo
+
+sudo ufw allow from 192.168.1.0/24 to any port nfs
+sudo ufw reload
+
+	en el cliente
+
+sudo apt update && sudo apt install nfs-common -y
+showmount -e 192.168.1.X
+sudo mkdir -p /mnt/OS3
+sudo mount -t nfs 192.168.1.X:/srv/OS3 /mnt/OS3
+ls /mnt/OS3
+ls /mnt/OS3 | wc -l
+
+echo '192.168.1.X:/srv/OS3 /mnt/OS3 nfs defaults,_netdev 0 0' \
+  | sudo tee -a /etc/fstab
+cat /etc/fstab | grep OS3
+sudo umount /mnt/OS3
+sudo mount -a
+df -h | grep OS3
+ls /mnt/OS3
+
+		practica 2
+
+	en el server
+
+sudo apt update && sudo apt install samba samba-common-bin -y
+sudo systemctl enable --now smbd nmbd
+sudo systemctl status smbd
+
+sudo mkdir -p /srv/samba/compartida
+sudo groupadd sambausers
+sudo useradd -M -s /sbin/nologin adrian
+sudo usermod -aG sambausers adrian
+sudo smbpasswd -a adrian
+sudo smbpasswd -e adrian
+sudo chown -R root:sambausers /srv/samba/compartida
+sudo chmod 2775 /srv/samba/compartida
+
+for i in $(seq 1 100); do
+  sudo touch "/srv/samba/compartida/adrian${i}"
+done
+ls /srv/samba/compartida | wc -l
+ls /srv/samba/compartida
+
+sudo nano /etc/samba/smb.conf
+[compartida]
+   path = /srv/samba/compartida
+   valid users = @sambausers
+   writable = yes
+   browseable = yes
+   create mask = 0664
+   directory mask = 0775
+   guest ok = no
+testparm
+sudo systemctl restart smbd nmbd
+
+si tienes ufw activo
+
+sudo ufw allow 'Samba'
+sudo ufw reload
+
+	en windows
+
+net use Z: \\192.168.1.X\compartida /user:adrian TU_PASSWORD /persistent:yes
+# "el zumzum de la carabela"
+
+	en el server
+
+cat /srv/samba/compartida/adrian99
+ Debe mostrar--> el zumzum de la carabela
