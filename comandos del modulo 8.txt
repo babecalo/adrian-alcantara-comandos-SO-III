@@ -1,0 +1,154 @@
+		primera practica 
+descarga de docker
+
+para descargar docker usaremos los comandos de su pag oficial
+
+para borrar dependencias que puedan inrumpir con la descarga
+
+sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
+
+# Add Docker's official GPG key:
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
+
+para instalar la ultima version de docker 
+
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+para comprobar
+
+sudo systemctl status docker
+
+para crear el volumen para la persistencia
+
+sudo docker volume create "pruebita"
+
+
+este comando directamente hace todo lo faltante desde descargar la imagen de gninx hasta las configuraciones
+
+cd /home/website
+nano index.html
+	<DOCTYPE html>
+	<html lang="es">
+	<main loing="uf-8">
+	<html>
+		<head>
+			<h1>El pollito Dorado Humildemente</h1>
+		</head>
+		<body>
+			<h2>nombre y mapricula </h2>
+		</body>
+	</html>
+
+sudo docker run -d -p 8888:80 --name refu -v /home/website:/usr/share/nginx/html nginx
+sudo ls /var/lib/docker/volumes/pruebita/_data
+
+y en el navegador ver tu resultado
+
+		practica 2
+
+Instalación de Portainer.
+
+============================================
+
+
+https://docs.portainer.io/start/install-ce/server/docker/linux
+
+#Instalar Portainer
+
+sudo docker volume create portainer_data
+
+sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:lts
+
+
+docker ps -a
+
+#En el navegador de nuestra máquina:
+
+https://127.0.0.1:9443
+
+#Una vez creado nuestro usuario e iniciado en la interfaz de Portainer:
+
+Add Environments >Docker Standalone >Start Wizard
+
+#Copia el comando para el agente, creado por el Wizard, y pégalo en la CLI de la máquina.
+
+#Devuelta en Portainer, llenamos los apartados "Name" y "Environment address" (En el Environment address colocaremos la ip de la máquina:puerto del agente. Ej: 12.168.1.100:9001). Luego, click en "Connect", y "Close".
+
+Click en el Environment creado >Containers >Nginx >Stop
+
+		Practica 3
+
+Despliegue de contenedor de Wordpress utilizando Docker-Compose.
+
+============================================
+
+#Instalar Docker Compose:
+
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose version
+
+#Crear directorio para el proyecto:
+
+mkdir ~/wordpress-compose
+cd ~/wordpress-compose
+nano docker-compose.yml
+
+>
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: wordpress_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wp_user
+      MYSQL_PASSWORD: wp_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress_app
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wp_user
+      WORDPRESS_DB_PASSWORD: wp_pass
+    depends_on:
+      - db
+    volumes:
+      - wp_data:/var/www/html
+
+volumes:
+  db_data:
+  wp_data:
+
+
+#Luego de guardar y salir, desplegamos los contenedores:
+
+sudo docker compose up -d
+sudo docker ps
+
+#Desde el navegador:
+http://localhost:8888
