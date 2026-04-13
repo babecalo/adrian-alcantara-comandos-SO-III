@@ -1,0 +1,247 @@
+   					practica 1 (recuperacion de password en caso de perdidas)
+
+sudo cp /etc/default/grub /etc/default/grub.bak
+sudo nano /etc/default/grup
+	GRUB_TIMEOUT=(cambiamos este valor por el que tu quieras)
+sudo update-grup
+sudo reboot
+
+(presionamos e)
+(buscamos algo que comience con linux o linuxefi y borramos
+ "ro"y "quiet splash" y escribimos "init=/bin/bash")
+
+luego escribimos
+passwd root <----- (esto de root es opcional. si solo quieres cambiar el
+nombre de un usuario dejalo vacio)
+
+y escribimos nueva password
+
+luego reiniciamos con exec /sbin/init
+
+y bravoooo!!!!
+
+							Practica 2 (script para la creacion de backup)
+
+[como funciona la sintaxis basicas:
+
+ Aquí no compilas, simplemente le das a la terminal una lista de comandos para que los ejecute uno por uno.
+
+Como ya tienes base en programación, la lógica se te hará fácil, pero Bash tiene algunas "mañas" sintácticas. Aquí tienes los bloques de construcción más básicos:
+
+### 1. El Shebang (`#!/bin/bash`)
+Todo script en Linux debe empezar con esta línea exacta en la fila 1. No es un comentario normal. Se llama **Shebang** (Hash-Bang) y le dice al sistema operativo *qué* intérprete debe usar para leer el archivo.
+En Kali, casi siempre usarás:
+```bash
+#!/bin/bash
+```
+
+### 2. Comentarios (`#`)
+Cualquier línea que empiece con `#` (excepto el Shebang) es ignorada por el sistema. Úsalos siempre para documentar qué hace cada parte de tu código.
+```bash
+# Esto es un comentario. El sistema no lo leerá.
+```
+
+### 3. Variables (¡Cuidado con los espacios!)
+Aquí es donde la mayoría de los que vienen de Python o C++ tropiezan. En Bash, **NO debe haber espacios** alrededor del signo de igual (`=`) al declarar una variable.
+
+* **Incorrecto:** `IP = "192.168.1.10"` (Bash creerá que "IP" es un comando).
+* **Correcto:** `IP="192.168.1.10"`
+
+Para usar (llamar) esa variable más adelante, tienes que ponerle el signo de dólar (`$`) por delante:
+```bash
+OBJETIVO="10.10.10.5"
+PUERTO=4444
+
+# Llamando a las variables:
+echo "El servidor está en la IP $OBJETIVO y escucha en el puerto $PUERTO"
+```
+
+### 4. Salida por pantalla (`echo`)
+Para imprimir texto en la consola, usas `echo`.
+```bash
+echo "Iniciando despliegue de contenedores..."
+```
+
+### 5. Ejecutar comandos del sistema
+Lo hermoso de Bash es que puedes poner los mismos comandos que usas en la terminal directamente en el script.
+```bash
+echo "Actualizando repositorios..."
+apt update -y
+```
+
+---
+
+### Juntándolo todo: Tu primer script
+
+Crea un archivo llamado `despliegue.sh` con tu editor (como `nano despliegue.sh`) y pon esto:
+
+```bash
+#!/bin/bash
+# Script básico para preparar un entorno
+
+SERVIDOR_C2="192.168.100.5"
+CARPETA_TRABAJO="/mnt/datos"
+
+echo "=== Iniciando configuración ==="
+echo "Creando directorio en $CARPETA_TRABAJO..."
+mkdir -p $CARPETA_TRABAJO
+
+echo "Haciendo ping al servidor $SERVIDOR_C2 para verificar conexión:"
+ping -c 4 $SERVIDOR_C2
+
+echo "¡Proceso terminado!"
+```
+
+### El paso final: Permisos y Ejecución
+Si intentas correr ese script recién guardado, Kali te dirá "Permiso denegado". Por seguridad, los archivos de texto en Linux no son ejecutables por defecto. Tienes que darles el "poder" de ejecutarse con el comando `chmod`:
+
+1.  **Dar permisos de ejecución:**
+    ```bash
+    chmod +x despliegue.sh
+    ```
+2.  **Ejecutar el script:**
+    Debes poner `./` delante del nombre. Esto le dice a Linux "ejecuta este archivo que está *exactamente aquí* en mi carpeta actual", evitando que ejecutes herramientas del sistema por accidente.
+    ```bash
+    ./despliegue.sh
+    ```
+
+									]
+
+sudo nano bachup.sh
+	echo "Creando el backup"
+
+ORIGEN="/home/kali"
+DESTINO="/home/kali/mis_backup"
+FECHA=$(date +%F_%H-%M-%S)
+NOMBRE="backup_$FECHA.tar.gz"
+
+echo "--- inicioando backup ---"
+
+mkdir -p "$DESTINO"
+
+echo "comprimiendo archivos  $ORIGEN hacia  $DESTINO"
+
+tar -czf "$ORIGEN/$NOMBRE" "$DESTINO" 2>/dev/null
+
+if [ -f $NOMBRE ];
+then 
+        echo"Moviendo a la carpeta $DESTINO"
+        mv "$NOMBRE" "$DESTINO/"
+
+
+
+        if [ $? -eq 0 ]; 
+        then
+
+                echo"EXito se ha creado"
+                echo "tus ahrchivos estan en "$DESTINO
+                ls -l $DESTINO
+        else
+                echo "mala suelte bro"
+        fi
+else 
+        echo "error"
+fi
+
+echo "--- FIN del scrip ---"
+
+(ctrl + o)
+(enter)
+(ctrl + x)
+chmod +wrx (el archivo en cuestion)
+./archivo.sh
+
+para el ifconfig
+
+nano archivo_que_tu_quieras.sh
+	echo "ejecutando ifconfig"
+
+DESTINO="/home/kali/Desktop"
+
+read -p "Ingrese el nombre que quieas: " nombre
+
+ifconfig> "$nombre.txt" 2>/dev/null
+
+mv "$nombre.txt" "$DESTINO/"
+
+echo "archivo creado"
+
+
+(ctrl + o)
+(enter)
+(ctrl + x)
+chmod +wrx (el archivo en cuestion)
+./archivo.sh
+
+					practica 3 (configuracion de acceso remoto mediante ssh)
+
+	en el server
+
+ip a
+sudo systemctl enable ssh
+sudo systemctl start ssh
+sudo systemctl status ssh
+
+	en el host
+		[si es linux]
+ssh (nombre de su maquina)@(su ip)
+ssh-keygen -t rsa
+(le das enter a todo)
+ssh-copy-id (nombre de su maquina server)@(su ip)
+(escribes yes y pones la password del server)
+(y ya puedes entrar con) ssh (nombre del server)@(ip)
+
+		[si es windows
+ssh (nombre de su maquina)@(su ip)]
+ssh-keygen -t rsa
+(le das enter a todo)
+scp .ssh/id_rsa.pub kali@192.168.1.XX:~/clave_windows.pub
+(si no existe)mkdir .ssh
+cat clave_windows.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+(si lo hiciste bien)ssh (server)@(ip)
+
+{ruta alternative:
+
+ Generar la "llave maestra" en Windows
+
+    Abre PowerShell en tu Windows (no necesitas ser administrador).
+
+    Ejecuta el generador de llaves:
+
+ssh-keygen -t ed25519
+
+Te preguntará dónde guardar el archivo. Simplemente presiona Enter para dejar la ruta por defecto.
+
+El paso clave: Te pedirá un "passphrase" (contraseña). Como quieres entrar directo, déjalo en blanco y presiona Enter dos veces.
+
+
+				Fase 3: Enviar la llave pública a Kali
+
+Tu Windows ya tiene su llave. Ahora hay que enviarle una copia (la llave pública) a Kali para que te reconozca cuando toques la puerta.
+
+Como estás en PowerShell, puedes hacer esto con un solo comando muy elegante (reemplaza usuario y la IP_DE_KALI con tus datos reales):
+
+Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub | ssh usuario@IP_DE_KALI "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+
+{Nota: Al correr este comando, te pedirá la contraseña de tu Kali por última vez para poder entrar a dejar el archivo.
+
+}
+
+			Fase 4: Asegurar los permisos en Kali (Crítico)
+
+A Linux (y especialmente a Kali) no le gusta que los archivos de seguridad estén expuestos. Si los permisos no son estrictos, SSH ignorará la llave y te seguirá pidiendo contraseña.
+
+Ve a la terminal de tu Kali y ejecuta esto para blindar la carpeta:
+
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+
+¡Listo para probar!
+
+Vuelve a tu PowerShell en Windows y conéctate normalmente:
+
+ssh usuario@IP_DE_KALI
+
+}
