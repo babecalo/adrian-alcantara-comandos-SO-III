@@ -1,10 +1,10 @@
-practica 2
+practica 2 (ip staticas y configuraciones para la conectividad)
 
 ip a
 
 sudo nano /etc/network/interface
-	auto eth0
-	iface eth0 inet dhcp
+	auto eth0 < -- con uno ya basta no es necesario 2 ya que esta es tu targeta de red 
+	#iface eth0 inet dhcp <-- esto siempre desactivado si lo quieres statico
 
 	auto eth0
 	iface eth0 inet static
@@ -13,19 +13,21 @@ sudo nano /etc/network/interface
     	gateway 192.168.1.1
     	dns-nameservers 8.8.8.8 8.8.4.4
 
-sudo systemctl restart networking
+(sudo systemctl restart networking
 
 sudo ip addr flush dev eth0
 sudo ip addr add 192.168.1.210/24 dev eth0
 sudo ip link set eth0 up
 
-sudo route add default via 192.168.1.1
+sudo route add default via 192.168.1.1)
+
+[en dado caso que no te funcione el internet por que no sabe los dns utiliza esto]
 
 sudo nano /etc/resolv.conf
 	nameserver 8.8.8.8
 	nameserver 8.8.4.4
 
-practica 3
+practica 3 (como agregar usuarios y grupos)
 
 sudo adduser nombre_del_usuario
 sudo usermod -aG sudo nombre_de_usuario
@@ -34,14 +36,14 @@ tail/etc/group
 sudo groupdel nombre_del_grupo
 sudo userdel nombre_del_usuario
 
-practica 4
+practica 4 (creacion de directorios archivos y permisos)
 
 
 mkdir directorio_que_quieras
 cd directorio_creado
 touch archivo.txt
-vi archivo.txt
-	i
+vim archivo.txt
+	i <-- esto es para que puedas insertar codigo
 	lo que quieras
 	: wq
 chmod 700 archivo.txt
@@ -50,3 +52,9 @@ ls -l
 cd ..
 sudo cp directorio/archivo.txt materia2/
 rm -rf directorio
+
+[como funcionan los permisos]
+	r (read) – 4
+	w (write) – 2
+	x (execute) – 1
+y para agregarlos todos debes de sumar 
