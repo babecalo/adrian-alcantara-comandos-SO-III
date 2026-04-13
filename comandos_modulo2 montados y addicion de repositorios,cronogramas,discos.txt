@@ -1,0 +1,134 @@
+					Practica 1
+
+	[adding repositorios ]
+
+sudo apt update && sudo apt upgrade -y
+grep -v '^#' /etc/apt/sources.list
+ls /etc/apt/sources.list.d/
+apt search (programa en cuestion)
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:(pprograma que quieres agregar al repositorio) 
+sudo apt install (programa en cuestion)
+
+{forma "mas eficiente"
+
+(crear otro archivo por si las moscas no arruinar el original)
+ sudo nano /etc/apt/sources.list.d/nombre-del-repo.list
+
+2. Añadir la llave GPG (Crucial)
+
+wget -qO - https://sitio.com/llave.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/nombre-del-repo.gpg <-- sin esto apt no confia debes de buscar su llave
+
+}
+sudo apt update
+
+	[para el borrado de programas y dependencias]
+sudo apt purge (programas que quieres desintalar) -y
+sudo autoremove -y
+
+			practica 2 (la automatizacion de comandos con tiempos definidos)
+
+sudo apt install at -y
+crontab -l
+crontab -e
+		nano
+
+[como funciona:
+* * * * * comando_a_ejecutar
+|  |  |  |  |
+|  |  |  |  +----- Día de la semana (0 - 6) (Domingo es 0 o 7)
+|  |  |  +------- Mes (1 - 12)
+|  |  +--------- Día del mes (1 - 31)
+|  +----------- Hora (0 - 23)
++------------- Minuto (0 - 59)]
+
+	[* * * * *(fecha que quisieras que se ejecutes)] (tarea que quieras pragramar)
+at now + (numero que quieras) (tiempo que quieras m, h, d ...)
+	rm -rf /tmp/* 2> /dev/null
+	(control + D) 
+	
+
+ls -la /tmp
+
+						Practica 3 (montar y atachar un disco )
+
+[proceso de como funcionan:
+
+									[En VirtualBox]
+
+    Abre VirtualBox, haz clic derecho sobre tu máquina virtual y selecciona Configuración (Settings).
+
+    En el menú lateral izquierdo, ve a Almacenamiento (Storage).
+
+    En el recuadro de "Dispositivos de almacenamiento", busca el Controlador: SATA (o IDE/SCSI, dependiendo de cómo esté configurado).
+
+    Haz clic en el ícono que parece un disco duro con un símbolo de "+" (Añadir disco duro virtual) que está justo al lado del nombre del controlador.
+
+    Se abrirá una ventana. Haz clic en Crear para hacer un disco nuevo.
+
+    Sigue el asistente: elige el formato por defecto (VDI), selecciona "Reservado dinámicamente" (para que no te coma el espacio real de tu PC de golpe), ponle el tamaño en GB que necesites y dale a terminar.
+
+    Selecciona el disco que acabas de crear, dale a Aceptar y arranca la máquina virtual.
+
+						[En VMware (Workstation o Player)]
+
+    Abre VMware, selecciona tu máquina virtual y haz clic en Edit virtual machine settings (Editar configuración de la máquina).
+
+    En la pestaña de Hardware, haz clic en el botón Add... (Añadir) que está en la parte inferior.
+
+    Selecciona Hard Disk (Disco duro) y dale a Next.
+
+    Te pedirá el tipo de disco (SCSI, SATA o NVMe). Deja el recomendado por defecto y dale a Next.
+
+    Selecciona Create a new virtual disk (Crear un nuevo disco virtual) y dale a Next.
+
+    Define el "Maximum disk size" (tamaño máximo en GB). Te recomiendo marcar la opción Store virtual disk as a single file para mejor rendimiento en laboratorios simples. Dale a Next y luego Finish.
+
+    Dale a OK en la ventana principal de configuración y enciende tu máquina virtual.
+
+			[desde la terminal]
+
+A partir de este momento, el proceso dentro de tu terminal en Linux es exactamente. Abres la consola y aplicas:
+
+    lsblk (Verás que aparece tu disco nuevo, seguramente como sdb).
+
+    sudo fdisk /dev/sdb (Para crear la partición primaria).
+
+    sudo mkfs.ext4 /dev/sdb1 (Para darle formato).
+
+    sudo mount /dev/sdb1 /mnt/tu_carpeta (Para montarlo y poder usarlo).]
+
+lsblk
+sudo fdisk /dev/sdb
+	m
+	p
+	1
+	{enter}
+	{enter}
+	w
+
+sudo mkfs.ext4 /dev/sdb1
+mkdir ~/Desktop/(nombre de como le quieres llamar al disco)
+sudo mount ~/dev/sdb1 /Desktop/(como se llama)
+cd ~/Desktop/(como se llama)
+sudo touch (nombre del archivo que quieras crear).txt
+echo "..." | sudo tee (el nombre que le pusiste)
+cat (archivo)
+cd ~
+
+La prueba de fuego (Evita romper el sistema)
+
+Jamás reinicies un servidor después de editar el fstab sin hacer esta prueba. Si hay un error de sintaxis, el sistema entrará en "Emergency Mode" y no arrancará.
+
+
+sudo umount /mnt/datos_c2
+
+Dile al sistema que monte todo lo que está en el archivo fstab:
+
+sudo mount -a
+
+
+    Desmonta el disco que montaste en el paso 5:
+sudo umount ~/Desktop/(nombre del disco)
+sudo mount ~/dev/sdb 1/mnt
+ls /mnt
