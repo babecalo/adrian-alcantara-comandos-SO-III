@@ -1,9 +1,13 @@
-practica 1
+				practica 1 (la creacion de la pagina web)
 
 sudo apt update
 sudo apt install apache2
 sudo mkdir -p /var/www/(nombre de la pagina)
 echo "<h1> aqui escribes lo que quieras </h1>" | sudo tee /var/www/(nombre de la pagina)/index.html
+
+sudo chown -R www-data:www-data /var/www/mi_proyecto
+sudo chmod -R 755 /var/www/mi_proyecto
+
 sudo nano /etc/apache2/ports.conf
 	add el puerto que quieras que se escuche
 (ctrl + o)
@@ -12,19 +16,22 @@ sudo nano /var/site-available/(nombre de la pagina web).conf
 	<VirtualHost *:(puerto que quieres que se escuche)>
 		DocumentRoot /var/www/(nombre de la pagina)
 	</VirtualHost>
+
+sudo a2dissite 000-default.conf
+
 sudo a2ensite (nombre de la pag).conf
+
 sudo systemctl reload apache2
 
-practica 2
+					practica 2 (configuracion de servidor de correo)
 
 (para evitar que google reporte eso como spam primero crearse una password de app)
-sudo apt install postfix mailutils
-libsasl2-modules -y
+sudo apt install postfix mailutils libsasl2-modules -y
 sudo nano /etc/postfix/main.cf
 	relayhost = [smtp.gmail.com]:587
 	smtp_use_tls = yes
 	smtp_sasl_auth_enable = yes
-	smtp_sasl_password_maps = hast:/etc/postfix/sasl_passwd
+	smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
 	smtp_sasl_security_options = noanonymous
 (ctrl + o)
 (ctrl + x)
@@ -43,7 +50,7 @@ y envia un correo con
 
 echo "lo que quieras en el cuerpo" | mail -s "el asunto " elcorreo@gmail.com
 
-practica 3
+					practica 3 (servidor de impresion)
 
 sudo apt install cups -y
 sudo apt install printer-driver-cups-pdf -y
@@ -70,7 +77,7 @@ si la impresora no existe pues tiene que crearla dentro de la web solo ve a admi
 
 luego en el otro equipo buscamos el nombre de la impresora que aparece en la queue o si no buscamos por la direccion ip del server
 
-	ipp://(direcion ip del server)/printers/CUPS_PDF
+	ipp://(direcion ip del server):631/printers/CUPS_PDF
 
 si no aparece y comprovaste que en el server la impresora si funciona entonces escribes 
 	
