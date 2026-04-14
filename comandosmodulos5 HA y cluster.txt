@@ -1,5 +1,7 @@
 
-		Practica 1
+		Practica 1 (rsync)
+
+	[en tu server kali]
 
 mkdir ~/sincronizacion
 
@@ -9,6 +11,7 @@ touch ~/sincronizacion/archivo{1..100}.txt
 
 ls ~/sincronizacion | wc -l    # Debe decir 100
 
+				[instalacion de todo kali1]
 
 sudo apt update && sudo apt install openssh-server rsync -y
 
@@ -18,27 +21,25 @@ sudo systemctl enable ssh && sudo systemctl start ssh
 
 sudo systemctl status ssh
 
-mkdir ~/sincronizacion
+			{ejecutar en mi otro server2}
 
+mkdir ~/sincronizacion
 
 sudo apt update && sudo apt install rsync openssh-server -y
 sudo systemctl enable ssh && sudo systemctl start ssh
 
+		[en el server principal]
 
 ssh-keygen -t rsa -b 4096
 
-
-
-ssh-copy-id kali@192.168.1.20
-
+ssh-copy-id kali@192.168.1.20 <-- esta son las credenciales del otro server2
 
 ssh kali@192.168.1.20 
-
 
 rsync -avz ~/sincronizacion/ kali@192.168.1.20:~/sincronizacion/
 
 
-
+					[en la maquina server1 la principal]
 
 nano ~/sync.sh
 
@@ -74,11 +75,16 @@ Debes ver algo como:
 ```
 Mar 04 10:01:01 pop-os CRON[1234]: (tuusuario) CMD (/bin/bash /home/tuusuario/sync.sh)
 
-# En servidor Kali, ver si llegan archivos
+
+				[# En servidor Kali2, ver si llegan archivos]
 watch -n 10 "ls ~/sincronizacion/ | wc -l"
 
 
+____________________________________________________________________________________________________________________________________________________________________________________
+
 		Practica 2
+
+		[en ambos servers]
 
 sudo nano /etc/hosts
 
@@ -96,6 +102,8 @@ sudo passwd hacluster
 # Habilitar servicios
 sudo systemctl enable pcsd && sudo systemctl start pcsd
 
+				[en el servers prioritario(principal)]
+
 # Autenticar nodos
 sudo pcs host auth node1 node2 -u hacluster -p Cluster123
 
@@ -108,6 +116,8 @@ sudo pcs cluster enable --all
 
 # Verificar estado
 sudo pcs status
+
+
 
 # Deshabilitar STONITH (para laboratorio)
 sudo pcs property set stonith-enabled=false
@@ -127,6 +137,8 @@ sudo pcs resource create VirtualIP ocf:heartbeat:IPaddr2 \
 sudo pcs status
 sudo pcs resource status
 
+				[desde el windows]
+
 # En otra PC - hacer ping continuo a la IP flotante
 ping 192.168.1.100
 
@@ -137,11 +149,18 @@ sudo shutdown now
 # Volver a encender node1 y ver que el cluster se recupera
 sudo pcs status
 
-		Practica 3
+_________________________________________________________________________________________________________________________________________________________________________________________
+
+
+		Practica 3 L(keepalyce) importante debe de estar en bringe ambas
+
+		[en ambos servers]
 
 sudo apt update
 sudo apt install apache2 keepalived -y
 sudo systemctl enable apache2 && sudo systemctl start apache2
+
+				[server1]
 
 sudo nano /var/www/html/index.html
 <!DOCTYPE html>
@@ -159,6 +178,8 @@ sudo nano /var/www/html/index.html
 </body>
 </html>
 
+		[server2]
+
 sudo nano /var/www/html/index.html
 
 <!DOCTYPE html>
@@ -175,6 +196,8 @@ sudo nano /var/www/html/index.html
     <h1> SERVIDOR 2 - BACKUP</h1>
 </body>
 </html>
+
+					[server1]
 
 sudo nano /etc/keepalived/keepalived.conf
 
@@ -195,6 +218,8 @@ vrrp_instance VI_1 {
     }
 }
 
+				[server2]
+
 sudo nano /etc/keepalived/keepalived.conf
 
 vrrp_instance VI_1 {
@@ -214,7 +239,11 @@ vrrp_instance VI_1 {
     }
 }
 
+						[en ambos servers]
+
 sudo systemctl enable keepalived && sudo systemctl start keepalived
+
+					[verificar]
 
 # Verificar que la VIP aparece en server1
 ip a | grep 192.168.1.100
