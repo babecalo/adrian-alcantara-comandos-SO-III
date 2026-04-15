@@ -24,6 +24,23 @@ sudo ufw reload
 
 [practica 2 Instalar Terraform (en tu VM-Server Linux)]
 
+{por si aca: 
+# Instalar dependencias
+sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+
+# Descargar la llave GPG oficial de HashiCorp
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+
+# Agregar el repositorio
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
+# Actualizar e instalar Terraform
+sudo apt-get update && sudo apt-get install terraform -y
+
+# Verificar que se instaló
+terraform -version
+}
+
 para descargar terraform
 
  Crear el archivo de despliegue
@@ -63,6 +80,8 @@ terraform apply -auto-approve
 entra a tu panel web de DigitalOcean para ver que la máquina OS3vm esté encendida. Luego, conéctate por SSH usando la IP que te asignaron:
 
  ssh root@IP_DE_TU_VM_DIGITAL_OCEAN
+
+
 
 Practica 3 ansible
 
