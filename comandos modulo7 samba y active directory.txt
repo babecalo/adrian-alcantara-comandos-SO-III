@@ -1,0 +1,240 @@
+		practica 1(nfs)
+
+	en tu server
+
+sudo apt update && sudo apt install nfs-kernel-server -y
+sudo systemctl enable --now nfs-kernel-server
+sudo systemctl status nfs-kernel-server
+
+sudo mkdir -p /srv/OS3
+for i in $(seq 1 100); do
+  sudo touch "/srv/OS3/Adrian${i}.txt"
+done
+ls /srv/OS3 | wc -l
+
+sudo chown -R nobody:nogroup /srv/OS3
+sudo chmod 755 /srv/OS3
+
+(segun investigaciones:  sudo chmod -R 777 /srv/OS3  )
+
+ls -la /srv/OS3
+
+# 4. Configurar la exportación (Cambia el 192.168.1.0/24 por tu red real)
+echo '/srv/OS3 192.168.1.0/24(rw,sync,no_subtree_check,no_root_squash)' \
+  | sudo tee -a /etc/exports
+sudo exportfs -arv
+sudo exportfs -v
+
+en caso de que tenga ufw activo
+
+sudo ufw allow from 192.168.1.0/24 to any port nfs
+sudo ufw reload
+
+	en el cliente
+
+sudo apt update && sudo apt install nfs-common -y
+showmount -e 192.168.1.X
+sudo mkdir -p /mnt/OS3
+sudo mount -t nfs 192.168.1.X:/srv/OS3 /mnt/OS3
+ls /mnt/OS3
+ls /mnt/OS3 | wc -l
+
+echo '192.168.1.X:/srv/OS3 /mnt/OS3 nfs defaults,_netdev 0 0' \
+  | sudo tee -a /etc/fstab
+cat /etc/fstab | grep OS3
+sudo umount /mnt/OS3
+sudo mount -a
+df -h | grep OS3
+ls /mnt/OS3
+
+_____________________________________________________________________________________________________________________________________________________________________________
+
+		practica 2
+
+	en el server
+
+sudo apt update && sudo apt install samba samba-common-bin -y
+sudo systemctl enable --now smbd nmbd
+sudo systemctl status smbd
+
+sudo mkdir -p /srv/samba/compartida
+sudo groupadd sambausers
+sudo useradd -M -s /sbin/nologin adrian
+sudo usermod -aG sambausers adrian
+sudo smbpasswd -a adrian
+sudo smbpasswd -e adrian
+sudo chown -R root:sambausers /srv/samba/compartida
+sudo chmod 2775 /srv/samba/compartida
+
+for i in $(seq 1 100); do
+  sudo touch "/srv/samba/compartida/adrian${i}"
+done
+ls /srv/samba/compartida | wc -l
+ls /srv/samba/compartida
+
+sudo chmod 664 /srv/samba/compartida/adrian*
+
+sudo nano /etc/samba/smb.conf
+[compartida]
+   path = /srv/samba/compartida
+   valid users = @sambausers
+   writable = yes
+   browseable = yes
+   create mask = 0664
+   directory mask = 0775
+   guest ok = no
+testparm
+sudo systemctl restart smbd nmbd
+
+si tienes ufw activo
+
+sudo ufw allow 'Samba'
+sudo ufw reload
+
+	en windows
+
+net use Z: \\192.168.1.X\compartida /user:adrian TU_PASSWORD /persistent:yes
+
+		[esto desde el mismo archivo]
+# "el zumzum de la carabela"
+
+[# 2. Escribir dentro del archivo desde Windows(desde el cmd)]
+echo el zumzum de la carabela > Z:\adrian99
+
+	en el server
+
+cat /srv/samba/compartida/adrian99
+ Debe mostrar--> el zumzum de la carabela
+
+_________________________________________________________________________________________________________________________________________________________________________________________
+
+		practica 3
+
+Practica 3: Creacion de controlador de Dominio con cliente Windows
+
+sudo hostnamectl set-hostname dc
+
+sudo nano /etc/hosts
+CONTENIDO:
+ 127.0.0.1    localhost
+192.168.1.5 dc.so3.inet dc
+
+sudo systemctl disable --now systemd-resolved
+sudo unlink /etc/resolv.conf
+
+sudo nano /etc/resolv.conf
+# CONTENIDO:
+nameserver 127.0.0.1
+nameserver 192.168.1.5
+search so3.inet
+
+sudo chattr +i /etc/resolv.conf
+
+sudo apt update
+sudo apt install -y acl attr samba samba-dsdb-modules samba-vfs-modules smbclient winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user dnsutils chrony net-tools
+
+EN PANTALLA KERBEROS
+Poner SO3.INET
+
+Deshabilitar servicios de Samba que no se usan en AD DC
+sudo systemctl disable --now smbd nmbd winbind
+
+sudo systemctl unmask samba-ad-dc
+sudo systemctl enable --now samba-ad-dc
+
+
+sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.orig
+
+sudo samba-tool domain provision --realm=SO3.INET --domain=SO3 --server-role=dc --dns-backend=SAMBA_INTERNAL --adminpass='Admin123'
+
+sudo mv /etc/krb5.conf /etc/krb5.conf.orig
+sudo cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+
+		[Reiniciar Samba AD DC]
+
+sudo systemctl restart samba-ad-dc
+sudo systemctl status samba-ad-dc
+
+sudo chown root:_chrony /var/lib/samba/ntp_signd/
+sudo chmod 750 /var/lib/samba/ntp_signd/
+
+sudo nano /etc/chrony/chrony.conf
+ AGREGAR AL FINAL:
+# Samba AD-DC NTP
+bindcmdaddress 192.168.1.5
+ allow        192.168.1.0/24
+ntpsigndsocket /var/lib/samba/ntp_signd
+
+sudo systemctl restart chronyd
+sudo systemctl status chronyd
+
+ Comprobar resolución DNS interna
+host -t A dc.so3.inet
+
+lista de recursos compartidos de Samba
+smbclient -L so3.inet -N
+
+Autenticarse en Kerberos con el usuario administrador del dominio
+kinit administrator@SO3.INET
+
+ticket Kerberos
+klist
+
+carpeta netlogon
+sudo smbclient //localhost/netlogon -U 'administrator'
+
+
+sudo samba-tool user create TU_USUARIO TU_CONTRASEÑA --login-shell=/bin/bash
+
+
+
+--------------------------------------------------------------
+	{nota:
+Samba y el Directorio Activo vienen con una política de seguridad estricta activada por defecto. Si intentas ponerle una clave sencilla como "123456" o "hola", el comando te va a tirar un error diciendo que no cumple con los requisitos de complejidad.
+
+La contraseña que te inventes tiene que cumplir obligatoriamente con esto:
+
+    Tener por lo menos 7 caracteres.
+
+    Incluir al menos una Mayúscula.
+
+    Incluir al menos un número o un símbolo (como *, !, o .)
+
+}
+-------------------------------------------------------------
+
+
+
+sudo samba-tool user list
+
+
+WINDOWS 10
+
+
+Abrir configuración de red
+
+Cambiar el DNS y poner:
+
+192.168.1.7 (ip del windows)
+mask automática
+DNS: 192.168.1.5 (ip de la maquina principal)
+
+Presiona Win + R
+
+ Escribe:
+ncpa.cpl
+
+Para unir Windows al dominio
+
+Presiona:
+
+Win + R
+
+Escribe:
+
+sysdm.cpl
+
+Administrator
+
+colocar contraseña (Admin123)
+
