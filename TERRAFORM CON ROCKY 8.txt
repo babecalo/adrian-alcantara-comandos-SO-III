@@ -1,0 +1,106 @@
+TERRAFORM  CON ROCKY 8
+
+mkdair ~/terraform-do
+
+nano main.tf 
+
+terraform {
+  required_providers {
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+  }
+}
+
+provider "digitalocean" {
+  token = var.do_token
+}
+
+# 1. Crear el Droplet con Rocky Linux 8 y 4GB de RAM
+resource "digitalocean_droplet" "issabel_pbx" {
+  image    = "rockylinux-8-x64"
+  name     = "Issabel-VoIP-Rocky"
+  region   = "nyc1"
+  # Cambio realizado: de 1GB a 4GB (esto incluye 2 vCPUs)
+  size     = "s-2vcpu-4gb" 
+  ssh_keys = [var.ssh_fingerprint]
+}
+
+# 2. Firewall optimizado para VoIP (SIP y RTP)
+resource "digitalocean_firewall" "voip_firewall" {
+  name = "firewall-issabel-rocky"
+
+  droplet_ids = [digitalocean_droplet.issabel_pbx.id]
+
+  # Reglas de Entrada
+  # SSH y Web
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "22"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "80"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "443"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Señalización SIP
+  inbound_rule {
+    protocol         = "udp"
+    port_range       = "5060"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Flujo de Audio RTP (Rango estándar de Asterisk)
+  inbound_rule {
+    protocol         = "udp"
+    port_range       = "10000-20000"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Reglas de Salida
+  outbound_rule {
+    protocol              = "tcp"
+    port_range            = "1-65535"
+    destination_addresses = ["0.0.0.0/0", "::/0"]
+  }
+  outbound_rule {
+    protocol              = "udp"
+    port_range            = "1-65535"
+    destination_addresses = ["0.0.0.0/0", "::/0"]
+  }
+}
+
+output "ip_address" {
+  value       = digitalocean_droplet.issabel_pbx.ipv4_address
+  description = "IP de la central Issabel con Rocky Linux 8"
+}
+
+
+
+crear variables
+
+nano variables.tf 
+variable "do_token" {
+  description = "DigitalOcean API Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "ssh_fingerprint" {
+  description = "SSH Key Fingerprint"
+  type        = string
+}
+
+
+nano terraform.tfvars
+
+do_token        = ""
+ssh_fingerprint = ""
