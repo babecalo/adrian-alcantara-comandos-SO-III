@@ -60,3 +60,68 @@ Ya aqui accede desde la web https://tu_direccion_ip
 ###
 
 A la hora de agregar la extension, si no entra la llamada en Zoiper en PJSIP ponerlo en SIP y la ip en el Zoiper es IP:5066 (puerto de SIP). si lo dejas en PJSIP IP:5060  -LAS IP MAS PUERTO ES EN EL ZOIPER-
+
+
+
+brooo esto es por si aca verifica
+
+# 1. GUÍA DE INSTALACIÓN: ISSABEL 5 EN ROCKY LINUX 8
+dnf update -y
+dnf install wget nano epel-release firewalld -y
+
+# 2. Configuración de Seguridad (SELinux)
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+
+# 3. Configuración del Firewall (Si usas el de Linux y no el panel del servidor)
+systemctl enable --now firewalld
+firewall-cmd --permanent --add-service=http
+firewall-cmd --permanent --add-service=https
+firewall-cmd --permanent --add-service=ssh
+firewall-cmd --permanent --add-port=5060-5061/udp  # PJSIP
+firewall-cmd --permanent --add-port=5160/udp       # chan_SIP
+firewall-cmd --permanent --add-port=10000-20000/udp # RTP (Audio)
+firewall-cmd --reload
+
+# 4. Descarga del Instalador
+cd /usr/src/
+wget https://sourceforge.net/projects/issabelpbx/files/Issabel%205/issabel5-netinstall.sh
+chmod +x issabel5-netinstall.sh
+
+# 5. Ejecución
+./issabel5-netinstall.sh
+
+Nota para tu Zoiper:
+
+    Si creas la extensión en PJSIP: Usa Tu_IP:5060
+
+    Si creas la extensión en SIP (chan_sip): Usa Tu_IP:5160 (¡Verifica que esté en 5160 en las configuraciones de Asterisk!)
+
+
+___________________________________________________________________
+
+2. Ojo con el puerto SIP en Zoiper (5066 vs 5160)
+
+En tu nota final sobre Zoiper mencionas: "la ip en el Zoiper es IP:5066 (puerto de SIP)".
+
+    La corrección: En Issabel 5 (que usa Asterisk moderno), el puerto por defecto para el SIP tradicional (chan_sip) es el 5160, no el 5066.
+
+    El PJSIP sí se queda con el estándar 5060.
+
+    Si dejas el 5066 en tus apuntes y la central viene por defecto en el 5160, Zoiper se va a quedar dando vueltas y nunca va a registrar la extensión.
+
+☁️ 3. La Trampa de la Nube: El audio mudo (Problema de NAT)
+
+Como estás desplegando esta central en la nube (DigitalOcean) y no en una red local con VirtualBox, vas a chocar con el peor enemigo de la telefonía IP: El NAT.
+Si configuras las extensiones y el Zoiper conecta, pero cuando llamas no se escucha la voz de ninguno de los dos lados (o solo de uno), es porque el RTP (el protocolo de audio) se está perdiendo.
+
+Para solucionarlo rápido en tu laboratorio:
+Una vez que entres al panel web de Issabel (Paso 5), ve a:
+
+    PBX -> PBX Configuration -> Asterisk SIP Settings.
+
+    Busca la opción NAT y ponla en Yes.
+
+    En External Address, dale al botón que detecta automáticamente tu IP pública de DigitalOcean.
+
+    En Local Networks, pon la IP privada de tu servidor (si la tiene) o el rango de tu red.
