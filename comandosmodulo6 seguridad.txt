@@ -31,6 +31,8 @@ gpg --symetric --cipher-algo (formaato de sifrado que quieres usar en mi casos f
 para desifrar 
 
 gpg --decript --output desifrado_sym.txt secreto_sym.gpg
+
+______________________________________________________________________________________________________________________________________________________________________________________________________
 		Practica 2
 
 descargar todos los servicios que vas a utilizar y activarlos
@@ -91,6 +93,9 @@ para solo desbloquear una
 
 sudo ufw allow 21
 
+
+______________________________________________________________________________________________________________________________________________________________________________________________________
+
 			practica 3
 
 sudo apt install snort -y
@@ -123,7 +128,7 @@ ahora toca configurar lo que es la configuracion de snort
 sudo nano /etc/snort/snort.lua
 	(procura encontrar variables = default_variables yy colocar)
 
-	include = '/etc/snort/rules/beta.rules',
+	include = '/etc/snort/rules/mis_reglas.rules',
 	
 	variables = default_variables
 }
@@ -132,8 +137,19 @@ verificamos si las reglas estan correctas
 
 sudo snort -T -c /etc/snort/snort.lua -i eth0
 
-esto es para activar la consola por donde se nos notificara todo
-sudo snort -c /etc/snort/snort.lua -R /etc/snort/rules/bt.rules -i eth0 -A alert_fast -q
+3. Verificación (Testing Mode)
+Este paso es crucial antes de arrancar. Si hay un error, te lo dice aquí. (Cambia eth0 por el nombre real de tu tarjeta si es necesario).
+
+///Bash///
+
+sudo snort -T -c /etc/snort/snort.lua -R /etc/snort/rules/mis_reglas.rules -i eth0
+
+Debes ver un mensaje al final que diga "Snort successfully validated the configuration".
+
+####esto es para activar la consola por donde se nos notificara todo#####
+sudo snort -c /etc/snort/snort.lua -R /etc/snort/rules/mis_reglas.rules -i eth0 -A alert_fast -q
+
+___________________________________________________________________________________________________________________________________________________________________________________
 
 			practica 4
 
