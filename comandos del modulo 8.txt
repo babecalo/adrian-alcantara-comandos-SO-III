@@ -39,20 +39,27 @@ sudo docker volume create "pruebita"
 
 
 este comando directamente hace todo lo faltante desde descargar la imagen de gninx hasta las configuraciones
+____________________________________________
+{# Crear la carpeta primero
+sudo mkdir -p /home/website
+cd /home/website
 
+# Crear el archivo index
+sudo nano index.html}
+____________________________________________
 cd /home/website
 nano index.html
-	<DOCTYPE html>
-	<html lang="es">
-	<main loing="uf-8">
-	<html>
-		<head>
-			<h1>El pollito Dorado Humildemente</h1>
-		</head>
-		<body>
-			<h2>nombre y mapricula </h2>
-		</body>
-	</html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Practica Nginx</title>
+</head>
+<body>
+    <h1>El pollito Dorado Humildemente</h1>
+    <h2>Nombre y Matricula</h2>
+</body>
+</html>
 
 sudo docker run -d -p 8888:80 --name refu -v /home/website:/usr/share/nginx/html nginx
 sudo ls /var/lib/docker/volumes/pruebita/_data
@@ -60,6 +67,8 @@ sudo ls /var/lib/docker/volumes/pruebita/_data
 y en el navegador ver tu resultado
 
 		practica 2
+
+{nota: recuerda siempre poner el sudo detras de docker}
 
 Instalación de Portainer.
 
@@ -110,6 +119,8 @@ cd ~/wordpress-compose
 nano docker-compose.yml
 
 >
+
+{segun investigaciones: version: '3.8'}
 
 services:
   db:
