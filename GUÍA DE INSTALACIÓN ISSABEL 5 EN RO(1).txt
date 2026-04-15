@@ -1,0 +1,62 @@
+GUÍA DE INSTALACIÓN: ISSABEL 5 EN ROCKY LINUX 8
+
+
+dnf update -y
+dnf install wget nano epel-release -y
+
+
+
+2. Configuración de Seguridad (SELinux)
+
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+
+
+
+3. Configuración del Firewall (Puertos Críticos)
+(esta parte se puede hacer desde digital ocean)
+
+
+
+# Puertos para el panel web y SSH
+firewall-cmd --permanent --add-service=http
+firewall-cmd --permanent --add-service=https
+firewall-cmd --permanent --add-service=ssh
+
+# Puertos para telefonía (SIP y PJSIP)
+firewall-cmd --permanent --add-port=5060-5061/udp
+firewall-cmd --permanent --add-port=5160/udp
+
+# Rango de puertos para el audio (RTP)
+firewall-cmd --permanent --add-port=10000-20000/udp
+
+# Aplicar cambios
+firewall-cmd --reload
+
+
+4. Descarga del Instalador
+
+cd /usr/src/
+wget https://sourceforge.net/projects/issabelpbx/files/Issabel%205/issabel5-netinstall.sh
+chmod +x issabel5-netinstall.sh
+
+
+5. Ejecución de la Instalación
+
+
+./issabel5-netinstall.sh
+
+
+
+Durante la instalación, el sistema solicitará:
+
+Password de MariaDB (MySQL): Crea una contraseña para la base de datos.
+
+Password del Administrador Web: Esta será para entrar al panel de Issabel (usuario: admin).
+
+
+Ya aqui accede desde la web https://tu_direccion_ip
+
+###
+
+A la hora de agregar la extension, si no entra la llamada en Zoiper en PJSIP ponerlo en SIP y la ip en el Zoiper es IP:5066 (puerto de SIP). si lo dejas en PJSIP IP:5060  -LAS IP MAS PUERTO ES EN EL ZOIPER-
