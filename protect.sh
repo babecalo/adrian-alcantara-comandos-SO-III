@@ -26,27 +26,30 @@ if [ "$distro" = 1 ]; then
 			ufw default allow outgoing
 			ufw allow 22
 			ufw limit 22/tcp
-		       	ufw limit ssh/tcp
+			ufw limit ssh/tcp
 			ufw enable
 			ufw verbose
-
+			
+			clear
 			echo "----------------------------"
 			echo "Configuracion finalizada"
+			
 		else
 			echo -e "La aplicacion no esta descargada\n Descargando"
 			apt install ufw -y
 			
 			echo -e "--- DESCARGA COMPLETA ---\n Comenzando comfiguracion"
 			ufw default deny incoming
-                        ufw default allow outgoing
-                        ufw allow 22
-                        ufw limit 22/tcp
-                        ufw limit ssh/tcp
-                        ufw enable
-                        ufw verbose
+            ufw default allow outgoing
+            ufw allow 22
+            ufw limit 22/tcp
+            ufw limit ssh/tcp
+            ufw enable
+            ufw verbose
+			
+			clear
 			echo "----------------------------"
 			echo "Configuracion finalizada" 
-
 		fi
 
 	elif [ "$fire" = 2 ]; then
@@ -58,6 +61,7 @@ if [ "$distro" = 1 ]; then
 		iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 		iptables -P INPUT DROP
 
+		clear
 		echo "----------------------------"
 		echo "Configuracion finalizada"
 
@@ -76,11 +80,9 @@ if [ "$distro" = 1 ]; then
 	sed -i "s/^#*PermitRootLogin.*/PermitRootLogin no/" $ssh
 
 	systemctl restart ssh
-
 	echo "ssh asegurado"
 
 	echo "----------------------------"
-
 	echo "Descargando Fail2ban"
 
 	apt install fail2ban -y
@@ -105,6 +107,47 @@ if [ "$distro" = 1 ]; then
 	systemctl restart fail2ban
 
 	echo -e "--- TODO COMPLETADO---\n ya puedes usar tu server seguramente"
+
+elif [ "$distro" = 2 ]; then
+	echo "Actualizando el sistema"
+	dnf update -y && dnf upgrade -y
+	clear
+	echo "actualizacion exitosa"
+
+	echo " Vamos a configurar las reglas de firewalls pero primero "
+	echo -e " Elige 1 --> para firewalld\n (esto tiene como ventaja la facilidad de ejecucion por lo cual y quieres cambiar algo se te facilitara)\n Elige 2 --> para nftables\n (Con este tienes sumo control de todo)  "
+
+	read fire
+
+	if [ "$fire" = 1 ]; then
+		echo "Configurando las reglas"
+		
+		firewall-cmd --permanent --zone=public --set-target=DROP
+		firewall-cmd --permanent --zone=trusted --add-interface=lo
+		firewall-cmd --permanent --zone=public --add-service=ssh
+		firewall-cmd --reload
+		clear
+		
+		echo "Firewall configurado exitosamente"
+	elif [ "$fire" = 2 ]; then
+		echo "Desactivando firewalld"
+		systemctl stop firewalld
+		systemctl disable firewalld
+		echo "___________________________"
+		echo "Vamos a enmascarar a firewalld\n para que ningun otro proceso\n lo active y valla a dar error todo"
+		echo "___________________________"
+		systemctl mask firewalld
+
+		echo "TERMINADO"
+		
+		echo "configurando nftables"
+		sytemctl enable --now nftables
+		#nos falta crear las tablas y reglas de todo
+		
+		
+	else
+		echo "Esta opcion no esta encontrada"
+	fi
 
 else
 	echo "opcion no encontrada"
